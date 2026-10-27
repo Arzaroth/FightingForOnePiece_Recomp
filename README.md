@@ -10,7 +10,8 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 ![Based on](https://img.shields.io/badge/based%20on-PS2Recomp-17a35b)
 ![Status](https://img.shields.io/badge/status-bring--up-c94f4f)
 
-<img src="docs/screenshots/title_screen.jpg" width="70%">
+<img src="docs/screenshots/fight.jpg" width="49%"> <img src="docs/screenshots/title_screen.jpg" width="49%">
+<img src="docs/screenshots/fight_intro.jpg" width="49%"> <img src="docs/screenshots/stage.jpg" width="49%">
 
 <sub>Captured from the running port (640x448, CPU renderer).</sub>
 
@@ -26,7 +27,7 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 
 ## Status
 
-**Bring-up.** Boots to the caution and title screens at 60 Hz with disc reads, textures, palettes and pad input working; movies are skipped. Runtime fixes it needs are on PS2Recomp branches waiting for `main` (see [RECOMP_NOTES.md](RECOMP_NOTES.md)).
+**Bring-up.** Plays from the title screen through the main menu, character select and VS screen into a 3D fight (Luffy vs Ace), at about 24 game frames per second on the title. Menu sprites flicker, movies are skipped, and the runtime fixes it needs are on PS2Recomp branches waiting for `main` (see [RECOMP_NOTES.md](RECOMP_NOTES.md)).
 
 | Milestone | |
 |---|:---:|
@@ -35,7 +36,7 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
 | Title screen, menus | 🔧 |
 | Music and sound effects | ⏳ |
-| Fights | ⏳ |
+| Fights | 🔧 |
 | Memory card: save and load | ⏳ |
 
 ✅ works · 🔧 in progress · ⏳ not reached yet

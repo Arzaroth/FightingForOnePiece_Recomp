@@ -63,6 +63,20 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
   CLUT from guest RAM (clean once run through the GS swizzle in Python) and comparing with the CLUT in a VRAM dump.
   Fixed on `ffop/vif1-path2-image`: the image continues in the next DIRECT/DIRECTHL's data.
 
+## Into the fight
+
+- Main menu: START on the title, CIRCLE to confirm (the game's pad word swaps the PS2 button bytes: 0x0800 START,
+  0x1000 UP, 0x0020 CIRCLE, 0x0040 CROSS). `PS2X_PAD_SCRIPT="22:START/800,27:CIRCLE/400,35:CIRCLE/400,43:CIRCLE/400"`
+  reaches the Luffy vs Ace fight in about 90 s.
+- Speed. The title stacks full-screen textured sprites; at the runtime's default GS fill model (4 pixels per GS cycle)
+  the modelled drawing took the whole field and the game ran at ~5 frames per second. The override models 8 pixels per
+  GS cycle (`setDrawRates({256, 32})`, as Soulcalibur III): ~24.
+- After the VS screen the main thread jumped to 0x12C1C8, a function reached only through a data pointer. The 36
+  pointer targets `scripts/find_code_pointers.py` finds are in `recomp/code_ptr_hints.txt` and folded into
+  `entry_points`.
+- Once, the fight load ran a VU1 microprogram that never ended and executed `0xfffffffb` as a lower instruction at
+  several PCs, then stalled; the next runs on the same build did not. No MPG upload was truncated (22,469 traced).
+
 ## Debugging recipes
 
 - gdb with ASLR off puts RDRAM at the same host address every run (0x7fffe1cd8010 here), so guest variables can be
@@ -76,4 +90,5 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 ## Status
 
 The caution and title screens draw correctly at 60 Hz with the runtime from `ffop/vif1-path2-image`; on PS2Recomp
-`main` alone the textures are still scrambled. Movies are skipped. Next: menus and the first fight.
+`main` alone the textures are still scrambled. Movies are skipped. The main menu and character select draw, but their 2D elements flicker (present in some frames
+only). Fights run: Luffy vs Ace on the bar stage. Next: the menu flicker, fight speed and sound.
