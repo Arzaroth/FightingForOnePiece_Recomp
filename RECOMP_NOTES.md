@@ -52,8 +52,9 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
   `goto` into newlib's own `_memalign_r`, which mallocs a larger block from the runtime and frees its leading
   fragment, here the whole block. Every aligned allocation lived in freed memory; the next one landed on it and the
   resource loader's sprite table (`gp-0x1ac4`) was overwritten with texture data, so every sprite had a null
-  definition and the screen stayed black. `memalign@0x1D78A0` is bound to the runtime; the generic fix (end a function
-  at a stub-bound start inside it) is on `ffop/stub-boundaries`. Found with a gdb watchpoint on the table pointer and
+  definition and the screen stayed black. Fixed in `ps2_recomp` on main (718c312): a function ends at the first
+  stub-bound start inside it, so the tail jump reaches the bound `_memalign_r`. (Before that, `memalign@0x1D78A0` was
+  bound game-side.) Found with a gdb watchpoint on the table pointer and
   a timeline of `malloc_r` / `guestFree` / `fioRead`.
 
 - Textures. Every PATH2 IMAGE upload (`sceVif1PkRefLoadImage`: CNT [NOP, DIRECTHL 1] + IMAGE tag, then REF [NOP,
@@ -92,5 +93,5 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 
 ## Status
 
-Title, main menu, character select, VS screen and the Luffy vs Ace fight draw correctly on PS2Recomp `main`
-0b7d1a4 (the VIF1 image fix is merged). Movies are skipped. Next: fight speed, sound, and the rest of the modes.
+Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 1, Ready, GO, attacks, the pause
+menu) run on PS2Recomp `main` 718c312. Movies are skipped. Next: fight speed, sound, and the rest of the modes.
