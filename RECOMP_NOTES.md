@@ -14,8 +14,13 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 
 ## VU1 microcode
 
-`ps2_vu_aot` finds only 2 microcode fragments (62 instruction pairs) in the ELF. The rest is presumably loaded from
-`FILES.FOA` at run time and runs in the VU1 interpreter until it is found and compiled.
+`ps2_vu_aot` finds only 2 MPG uploads (62 instruction pairs) in the ELF. The rest of the VU1 code is 14 raw blobs
+in the ELF's data, each behind a 32-byte header whose first two words are its address and size; the game builds
+their MPG uploads at run time, so the tool never sees them. In a fight the 16 KB blob at 0x1EDD60 fills VU1 code
+memory from address 0, and running it in the interpreter took ~70% of the game thread (sampling profile): ~15 game
+frames per second, the same on paraLLEl-GS. `scripts/vu1_blobs_elf.py` writes every blob as an MPG chain to VU
+address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_vu_aot`: the fight runs at ~40.
+`FILES.FOA` has MPG-shaped data too (105 fragments when wrapped as an ELF), but none of it was resident in a fight.
 
 ## Boot
 
@@ -94,4 +99,7 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 ## Status
 
 Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 1, Ready, GO, attacks, the pause
-menu) run on PS2Recomp `main` 718c312. Movies are skipped. Next: fight speed, sound, and the rest of the modes.
+menu) run on PS2Recomp `main` 718c312. Movies are skipped. The fight runs at ~40 game frames per second
+(`scripts/regress.sh`), the menus at ~55. Sound needs `ffop/iop-module-start-thread` and unbinding the
+`sceSdRemote*` stubs (SDRDRV and the Standard Kit then run in the IOP emulator); not on `main` yet. Next: sound
+on main, the fight's remaining speed, movies, the rest of the modes.
