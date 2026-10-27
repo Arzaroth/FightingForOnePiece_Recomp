@@ -214,6 +214,7 @@ stubs = [
   "sceWrite@0x001E5768",
   "sceIoctl@0x001E5A28",
   "ret0@0x001E7758",
+  "memalign@0x001D78A0",
   "sceCdSearchFile@0x001D31D8",
   "sceSifInitIopHeap@0x001E7DD8",
   "sceSifAllocIopHeap@0x001E7E60",
