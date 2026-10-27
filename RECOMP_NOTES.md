@@ -36,9 +36,8 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
   top of RAM, where the runtime grows its interrupt and callback stacks by default. The first timer interrupt
   (libtimer's handler at 0x1BD628, then the kernel alarm handler) wrote its frame over main's saved `ra`/`s0`, `main`
   (0x1BBB60) returned into crt0 and `exit`. Found by breaking on `EeScheduler::makeDormant` in gdb and reading the
-  dispatch history (`g_dispatchHistory` in `ps2_runtime.cpp`). `runtime/ffop_overrides.cpp` moves the pools and stacks
-  to 0x80000-0x100000 with `configureReservedMemory`, as Soulcalibur III does. sc3-port's
-  `runtime/setupthread-stack` branch does the same automatically from the `SetupThread` arguments (tested on FFOP).
+  dispatch history (`g_dispatchHistory` in `ps2_runtime.cpp`). The runtime now keeps its pools and stacks clear of
+  the `SetupThread` stack on its own (`runtime/setupthread-stack`, on main); FFOP needs no `configureReservedMemory`.
 - `sceCdLayerSearchFile` (0x1D31D8) retried `SifBindRpc` to the CDVD search server forever; it is bound to the
   runtime's `sceCdSearchFile` (the layer argument does not matter on a single-layer disc).
 - Movies. `playMovie(path, params)` at 0x1B6528 plays `MOVIES/FO_1.PSS` and `ONEP_OP3.PSS` through libmpeg. The
@@ -50,8 +49,8 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 - VIF1 packet builders. The analyzer bound `sceVif1PkOpenDirectCode`, `sceVif1PkCloseGifTag` and `sceVif1PkAddGsAD`
   to runtime handlers, which wrote broken packets next to the game's own `sceVif1PkTerminate`: 77M VIF1 NOPs and no
-  IMAGE transfer. They run the game's code now. sc3-port fixed the handlers on `hle/vif1-packet` (same packets as the
-  game's code, checked on FFOP).
+  IMAGE transfer. sc3-port fixed the handlers on `hle/vif1-packet` (same packets as the game's code), and they are
+  bound to the runtime again since main 2e15545.
 - memalign. The game's allocator (0x1793B8) calls `memalign` (0x1D78A0), which tail-jumps into `_memalign_r`
   (0x1D78C8, bound to the runtime). `ps2_recomp` had merged the two into one function, so the jump became a local
   `goto` into newlib's own `_memalign_r`, which mallocs a larger block from the runtime and frees its leading
@@ -99,7 +98,8 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 ## Status
 
 Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 1, Ready, GO, attacks, the pause
-menu) run on PS2Recomp `main` 718c312. Movies are skipped. The fight runs at ~40 game frames per second
-(`scripts/regress.sh`), the menus at ~55. Sound needs `ffop/iop-module-start-thread` and unbinding the
-`sceSdRemote*` stubs (SDRDRV and the Standard Kit then run in the IOP emulator); not on `main` yet. Next: sound
-on main, the fight's remaining speed, movies, the rest of the modes.
+menu) run on PS2Recomp `main` 2e15545, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
+game's code, so SDRDRV and the Standard Kit run in the IOP emulator (SDRDRV's start routine blocks until the EE
+binds its server, which needs IRX start routines on an IOP thread). Movies are skipped. The fight runs at ~40 game
+frames per second (`scripts/regress.sh`), the menus at ~55. Next: movies on main (`PS2X_FFOP_MOVIES=1`), the fight's
+remaining speed, the rest of the modes.
