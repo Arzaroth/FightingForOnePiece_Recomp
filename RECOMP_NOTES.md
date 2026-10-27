@@ -27,9 +27,46 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
   because `sceFsInit` is a stub, and waited forever on its semaphore. The only caller, 0x1B5A80, sets the CD spindle
   mode (`sceDevctl("cdrom0:", 0x4380 | 0x4381, ...)`), which means nothing on the host: bound to `ret0`.
 
+- Main thread stack. crt0 calls `SetupThread(gp, stack 0x01F80000, size 0x80000)`, so the main stack ends at the
+  top of RAM, where the runtime grows its interrupt and callback stacks by default. The first timer interrupt
+  (libtimer's handler at 0x1BD628, then the kernel alarm handler) wrote its frame over main's saved `ra`/`s0`, `main`
+  (0x1BBB60) returned into crt0 and `exit`. Found by breaking on `EeScheduler::makeDormant` in gdb and reading the
+  dispatch history (`g_dispatchHistory` in `ps2_runtime.cpp`). `runtime/ffop_overrides.cpp` moves the pools and stacks
+  to 0x80000-0x100000 with `configureReservedMemory`, as Soulcalibur III does. sc3-port's
+  `runtime/setupthread-stack` branch does the same automatically from the `SetupThread` arguments (tested on FFOP).
+- `sceCdLayerSearchFile` (0x1D31D8) retried `SifBindRpc` to the CDVD search server forever; it is bound to the
+  runtime's `sceCdSearchFile` (the layer argument does not matter on a single-layer disc).
+- Movies. `playMovie(path, params)` at 0x1B6528 plays `MOVIES/FO_1.PSS` and `ONEP_OP3.PSS` through libmpeg. The
+  runtime's libmpeg calls the game's DATA stream callback (0x1B8728, registered with `sceMpegAddStrCallback`) before
+  the game has set up its audio ring at 0xBE8600, and the callback's `memcpy` then copies 0x110185D5 bytes to 0x3830.
+  The override makes `playMovie` return 0 at once; `PS2X_FFOP_MOVIES=1` plays them anyway.
+
+## Drawing
+
+- VIF1 packet builders. The analyzer bound `sceVif1PkOpenDirectCode`, `sceVif1PkCloseGifTag` and `sceVif1PkAddGsAD`
+  to runtime handlers, which wrote broken packets next to the game's own `sceVif1PkTerminate`: 77M VIF1 NOPs and no
+  IMAGE transfer. They run the game's code now. sc3-port fixed the handlers on `hle/vif1-packet` (same packets as the
+  game's code, checked on FFOP).
+- memalign. The game's allocator (0x1793B8) calls `memalign` (0x1D78A0), which tail-jumps into `_memalign_r`
+  (0x1D78C8, bound to the runtime). `ps2_recomp` had merged the two into one function, so the jump became a local
+  `goto` into newlib's own `_memalign_r`, which mallocs a larger block from the runtime and frees its leading
+  fragment, here the whole block. Every aligned allocation lived in freed memory; the next one landed on it and the
+  resource loader's sprite table (`gp-0x1ac4`) was overwritten with texture data, so every sprite had a null
+  definition and the screen stayed black. `memalign@0x1D78A0` is bound to the runtime; the generic fix (end a function
+  at a stub-bound start inside it) is on `ffop/stub-boundaries`. Found with a gdb watchpoint on the table pointer and
+  a timeline of `malloc_r` / `guestFree` / `fioRead`.
+
+## Debugging recipes
+
+- gdb with ASLR off puts RDRAM at the same host address every run (0x7fffe1cd8010 here), so guest variables can be
+  read after interrupting the runner: see `build/state.sh`-style scripts (run, SIGINT after N s, `x/..wx`).
+- Generated functions are host functions: `break sub_XXXXXXXX_0xaddr` and `dprintf` on them, or on a generated
+  source line, give guest call counts and arguments (`ctx->r[n]`). Breakpoints on a function also fire on resumes
+  into its middle, so read arguments at the caller's call site instead.
+- `PS2X_PAD_SCRIPT` button names are upper case (`START`, `CROSS`); hold a button (`START/20000`) to be sure a poll
+  sees it.
+
 ## Status
 
-Boots far enough to load all 14 IRX modules and start the sound driver (SIF RPC `0x80000780`) and five EE threads,
-with GIF path 2/3 traffic but no frame presented. After about 15 s the main thread (entry `0x10001C`) is dormant, and
-thread 6 (entry `0x1004F8`, priority 100), which it created just before, is gone. Threads 3 and 4 wait on semaphores
-11 and 14 and nothing runs. Next: find out how the main thread ended and what thread 6 did.
+Reaches the title screen at 60 Hz: `FILES.FOA` reads, texture uploads and pad input work, and the caution screen
+draws (characters, background, text). Textures look checkered/dithered and one tile stays black.
