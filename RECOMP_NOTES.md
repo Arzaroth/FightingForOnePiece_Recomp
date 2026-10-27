@@ -70,7 +70,10 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
   reaches the Luffy vs Ace fight in about 90 s.
 - Speed. The title stacks full-screen textured sprites; at the runtime's default GS fill model (4 pixels per GS cycle)
   the modelled drawing took the whole field and the game ran at ~5 frames per second. The override models 8 pixels per
-  GS cycle (`setDrawRates({256, 32})`, as Soulcalibur III): ~24.
+  GS cycle (`setDrawRates({256, 32})`, as Soulcalibur III): ~24. The profile then showed the CPU rasterizer's
+  GSFrontend thread saturated (SampleTexture, WritePixelBlock); `GSCpuBackend::SetAsyncRasterization(true)` draws on
+  the backend's workers: ~54 (paraLLEl-GS: ~60). The GS shadow check found no difference on boot and the title. At
+  ~24 fps the single-buffered menus (FRAME and DISPFB both at FBP 0) were presented half-drawn; at ~54 they are not.
 - After the VS screen the main thread jumped to 0x12C1C8, a function reached only through a data pointer. The 36
   pointer targets `scripts/find_code_pointers.py` finds are in `recomp/code_ptr_hints.txt` and folded into
   `entry_points`.
@@ -89,6 +92,5 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 
 ## Status
 
-The caution and title screens draw correctly at 60 Hz with the runtime from `ffop/vif1-path2-image`; on PS2Recomp
-`main` alone the textures are still scrambled. Movies are skipped. The main menu and character select draw, but their 2D elements flicker (present in some frames
-only). Fights run: Luffy vs Ace on the bar stage. Next: the menu flicker, fight speed and sound.
+Title, main menu, character select, VS screen and the Luffy vs Ace fight draw correctly on PS2Recomp `main`
+0b7d1a4 (the VIF1 image fix is merged). Movies are skipped. Next: fight speed, sound, and the rest of the modes.

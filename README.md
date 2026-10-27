@@ -11,9 +11,10 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 ![Status](https://img.shields.io/badge/status-bring--up-c94f4f)
 
 <img src="docs/screenshots/fight.jpg" width="49%"> <img src="docs/screenshots/title_screen.jpg" width="49%">
+<img src="docs/screenshots/main_menu.jpg" width="49%"> <img src="docs/screenshots/character_select.jpg" width="49%">
 <img src="docs/screenshots/fight_intro.jpg" width="49%"> <img src="docs/screenshots/stage.jpg" width="49%">
 
-<sub>Captured from the running port (640x448, CPU renderer).</sub>
+<sub>Captured from the running port (640x448, CPU rasterizer).</sub>
 
 </div>
 
@@ -27,7 +28,7 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 
 ## Status
 
-**Bring-up.** Plays from the title screen through the main menu, character select and VS screen into a 3D fight (Luffy vs Ace), at about 24 game frames per second on the title. Menu sprites flicker, movies are skipped, and the runtime fixes it needs are on PS2Recomp branches waiting for `main` (see [RECOMP_NOTES.md](RECOMP_NOTES.md)).
+**Bring-up.** Plays from the title screen through the main menu, character select and VS screen into a 3D fight (Luffy vs Ace), the title at about 54 game frames per second with the CPU rasterizer. Movies are skipped; sound and long play sessions are untested.
 
 | Milestone | |
 |---|:---:|
