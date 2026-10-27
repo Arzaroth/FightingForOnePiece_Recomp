@@ -56,6 +56,13 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
   at a stub-bound start inside it) is on `ffop/stub-boundaries`. Found with a gdb watchpoint on the table pointer and
   a timeline of `malloc_r` / `guestFree` / `fioRead`.
 
+- Textures. Every PATH2 IMAGE upload (`sceVif1PkRefLoadImage`: CNT [NOP, DIRECTHL 1] + IMAGE tag, then REF [NOP,
+  DIRECTHL n] + pixels, TTE on) landed in VRAM 8 bytes off: after the DIRECT that carried the IMAGE tag, the runtime's
+  VIF1 took the next bytes as raw image data, so the REF tag's two VIFcodes became the first two texels. PSMT8 tiles
+  uploaded as PSMCT32 then looked scrambled, and the CLUT was shifted by two entries. Found by dumping the texture and
+  CLUT from guest RAM (clean once run through the GS swizzle in Python) and comparing with the CLUT in a VRAM dump.
+  Fixed on `ffop/vif1-path2-image`: the image continues in the next DIRECT/DIRECTHL's data.
+
 ## Debugging recipes
 
 - gdb with ASLR off puts RDRAM at the same host address every run (0x7fffe1cd8010 here), so guest variables can be
@@ -68,5 +75,5 @@ in memory). `recomp/ffop.toml` is `ps2_analyzer` output with the paths made rela
 
 ## Status
 
-Reaches the title screen at 60 Hz: `FILES.FOA` reads, texture uploads and pad input work, and the caution screen
-draws (characters, background, text). Textures look checkered/dithered and one tile stays black.
+The caution and title screens draw correctly at 60 Hz with the runtime from `ffop/vif1-path2-image`; on PS2Recomp
+`main` alone the textures are still scrambled. Movies are skipped. Next: menus and the first fight.

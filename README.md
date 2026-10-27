@@ -10,6 +10,10 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 ![Based on](https://img.shields.io/badge/based%20on-PS2Recomp-17a35b)
 ![Status](https://img.shields.io/badge/status-bring--up-c94f4f)
 
+<img src="docs/screenshots/title_screen.jpg" width="70%">
+
+<sub>Captured from the running port (640x448, CPU renderer).</sub>
+
 </div>
 
 > [!IMPORTANT]
@@ -22,7 +26,7 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 
 ## Status
 
-**Bring-up.** Boots to the caution and title screens at 60 Hz with disc reads, texture uploads and pad input working; textures still draw wrong (checkered) and movies are skipped.
+**Bring-up.** Boots to the caution and title screens at 60 Hz with disc reads, textures, palettes and pad input working; movies are skipped. Runtime fixes it needs are on PS2Recomp branches waiting for `main` (see [RECOMP_NOTES.md](RECOMP_NOTES.md)).
 
 | Milestone | |
 |---|:---:|
@@ -113,6 +117,7 @@ logs to `build/runs/<name>.log` and screenshots the window.
 | `recomp/` | Recompiler config (`ffop.toml`) and, as the port grows, the function map and entry-point hint lists |
 | `runtime/` | Game override module (`ffop_overrides.cpp`) |
 | `scripts/` | Build, analyze, recompile, VU1 compile and run scripts; disassembly, IRX and profiling helpers |
+| `docs/screenshots/` | Pictures of the running port |
 | `RECOMP_NOTES.md` | How the port is brought up, the fixes and the debugging tools |
 | `game/`, `generated/`, `build/` | Created by the scripts, ignored by git: disc files, generated C++, builds |
 
