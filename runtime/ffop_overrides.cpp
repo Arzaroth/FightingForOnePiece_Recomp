@@ -1,5 +1,6 @@
 #include "game_overrides.h"
 #include "ps2_runtime.h"
+#include "runtime/gs/gs_cpu_backend.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -30,6 +31,9 @@ namespace
         // The title and menus are stacks of full-screen textured sprites: at the default 4 pixels per GS cycle the
         // modelled drawing takes the whole field and the game runs at a few frames per second.
         runtime.gsForPresentation().setDrawRates({256u, 32u});
+        // The CPU rasterizer's GS thread is saturated by those sprites (~25 game frames per second on the title);
+        // rasterizing on the backend's workers gives ~54.
+        GSCpuBackend::SetAsyncRasterization(true);
         if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
             runtime.registerFunction(kPlayMovie, playMovieSkipped);
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
