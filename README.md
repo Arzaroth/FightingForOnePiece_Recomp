@@ -22,12 +22,12 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 
 ## Status
 
-**Bring-up.** The ELF is mapped by `ps2_analyzer` and recompiles; boot has not been worked on yet.
+**Bring-up.** The ELF is mapped by `ps2_analyzer` and recompiles; boot loads the IOP modules and the sound driver, then stalls before the first frame.
 
 | Milestone | |
 |---|:---:|
 | Map and recompile the main ELF | ✅ |
-| Boot: EE kernel, the game's own IOP modules, CD reads from the disc files | ⏳ |
+| Boot: EE kernel, the game's own IOP modules, CD reads from the disc files | 🔧 |
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
 | Title screen, menus | ⏳ |
 | Music and sound effects | ⏳ |
