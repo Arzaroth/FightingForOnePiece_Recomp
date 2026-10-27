@@ -40,10 +40,17 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
   the `SetupThread` stack on its own (`runtime/setupthread-stack`, on main); FFOP needs no `configureReservedMemory`.
 - `sceCdLayerSearchFile` (0x1D31D8) retried `SifBindRpc` to the CDVD search server forever; it is bound to the
   runtime's `sceCdSearchFile` (the layer argument does not matter on a single-layer disc).
-- Movies. `playMovie(path, params)` at 0x1B6528 plays `MOVIES/FO_1.PSS` and `ONEP_OP3.PSS` through libmpeg. The
-  runtime's libmpeg calls the game's DATA stream callback (0x1B8728, registered with `sceMpegAddStrCallback`) before
-  the game has set up its audio ring at 0xBE8600, and the callback's `memcpy` then copies 0x110185D5 bytes to 0x3830.
-  The override makes `playMovie` return 0 at once; `PS2X_FFOP_MOVIES=1` plays them anyway.
+- Movies. `playMovie(path, params)` at 0x1B6528 plays `MOVIES/FO_1.PSS` and `ONEP_OP3.PSS` through libmpeg, fed
+  by its own reader: `sceCdStRead` (wrapper 0x1B7950) into `sceMpegDemuxPss` (0x1C95E0, a guest wrapper around the
+  bound `sceMpegDemuxPssRing`), from 0x1B89C0. Its stream callbacks (0x1B8610 video, 0x1B8728 data, registered with
+  `sceMpegAddStrCallback`) copy each packet into the game's own rings; the NODATA callback (0x1B87E8) DMAs the video
+  ring to the IPU. Before playing, 0x1B7EB4 demuxes until `sceMpegDemuxPss` consumes nothing, which on the console
+  happens when a stream callback returns 0 (its ring is full). The runtime queues stream callbacks to run later and
+  ignores what they return, so demux always consumes everything: the priming loop reads the whole file and then
+  polls `sceCdStRead` at the end of the stream forever (0x1B89C0 with blocking=1 never returns 0), so
+  `sceMpegGetPicture` is never reached. Fixing it means running stream callbacks synchronously in demux and
+  stopping at the first that returns 0. The override makes `playMovie` return 0 at once; `PS2X_FFOP_MOVIES=1` plays
+  them anyway.
 
 ## Drawing
 
@@ -101,5 +108,5 @@ Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 
 menu) run on PS2Recomp `main` 2e15545, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
 game's code, so SDRDRV and the Standard Kit run in the IOP emulator (SDRDRV's start routine blocks until the EE
 binds its server, which needs IRX start routines on an IOP thread). Movies are skipped. The fight runs at ~40 game
-frames per second (`scripts/regress.sh`), the menus at ~55. Next: movies on main (`PS2X_FFOP_MOVIES=1`), the fight's
-remaining speed, the rest of the modes.
+frames per second (`scripts/regress.sh`), the menus at ~55. Next: movies (stream callbacks in demux, see above), the
+fight's remaining speed, the rest of the modes.
