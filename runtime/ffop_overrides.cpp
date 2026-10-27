@@ -1,6 +1,7 @@
 #include "game_overrides.h"
 #include "ps2_runtime.h"
 
+#include <cstdlib>
 #include <iostream>
 
 namespace
@@ -12,9 +13,22 @@ namespace
     constexpr uint32_t kReservedTop = 0x00100000u;
     constexpr uint32_t kMainStackBottom = 0x01F80000u;
 
+    // playMovie(path, params): plays MOVIES/FO_1.PSS or ONEP_OP3.PSS to the end through libmpeg, returns 0. The
+    // runtime's libmpeg calls the game's audio stream callback before the game has set up its audio ring, and the
+    // callback's memcpy then wipes most of RAM. PS2X_FFOP_MOVIES=1 plays them anyway.
+    constexpr uint32_t kPlayMovie = 0x001B6528u;
+
+    void playMovieSkipped(uint8_t *, R5900Context *ctx, PS2Runtime *)
+    {
+        setReturnS32(ctx, 0);
+        ctx->pc = getRegU32(ctx, 31);
+    }
+
     void applyFightingForOnePiece(PS2Runtime &runtime)
     {
         runtime.configureReservedMemory(kReservedBase, kReservedTop, kMainStackBottom);
+        if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
+            runtime.registerFunction(kPlayMovie, playMovieSkipped);
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
     }
 }
