@@ -27,6 +27,9 @@ namespace
     void applyFightingForOnePiece(PS2Runtime &runtime)
     {
         runtime.configureReservedMemory(kReservedBase, kReservedTop, kMainStackBottom);
+        // The title and menus are stacks of full-screen textured sprites: at the default 4 pixels per GS cycle the
+        // modelled drawing takes the whole field and the game runs at a few frames per second.
+        runtime.gsForPresentation().setDrawRates({256u, 32u});
         if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
             runtime.registerFunction(kPlayMovie, playMovieSkipped);
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
