@@ -26,6 +26,13 @@ namespace
         // The CPU rasterizer's GS thread is saturated by those sprites (~25 game frames per second on the title);
         // rasterizing on the backend's workers gives ~54.
         GSCpuBackend::SetAsyncRasterization(true);
+        // VIF1/VU1 on the worker thread and presentation through the GS queue: on the EE thread they pushed fight
+        // frames past a field (32 -> 46 game frames per second). PS2X_VIF1_THREAD=0 keeps them on the EE thread.
+        if (const char *threaded = std::getenv("PS2X_VIF1_THREAD"); !(threaded && threaded[0] == '0'))
+        {
+            runtime.memory().setVif1Threaded(true);
+            runtime.memory().setGsLag(true);
+        }
         if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
             runtime.registerFunction(kPlayMovie, playMovieSkipped);
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
