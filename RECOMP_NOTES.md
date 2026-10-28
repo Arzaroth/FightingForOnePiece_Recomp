@@ -54,6 +54,11 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Drawing
 
+- Depth. The runtime's `sceGsSetDefDBuff` read `ztest`, `zpsm` and `clear` from the stack instead of `$t0`-`$t2`,
+  so ZBUF masked every Z write (0x0000000100000118 where PCSX2 has 0x0000000001000118, Z24 with writes) and hair
+  and hat interiors were drawn over the faces; with Z writes on, the double buffer's clear packet (never seeded)
+  left the previous frame's Z and the fight was a grey screen. Both fixed on PS2Recomp main 4376493. Found by
+  comparing a PCSX2 GS dump (Shift+F8) with ours.
 - VIF1 packet builders. The analyzer bound `sceVif1PkOpenDirectCode`, `sceVif1PkCloseGifTag` and `sceVif1PkAddGsAD`
   to runtime handlers, which wrote broken packets next to the game's own `sceVif1PkTerminate`: 77M VIF1 NOPs and no
   IMAGE transfer. sc3-port fixed the handlers on `hle/vif1-packet` (same packets as the game's code), and they are
@@ -105,8 +110,9 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 ## Status
 
 Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 1, Ready, GO, attacks, the pause
-menu) run on PS2Recomp `main` 2e15545, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
+menu) run on PS2Recomp `main` 4376493, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
 game's code, so SDRDRV and the Standard Kit run in the IOP emulator (SDRDRV's start routine blocks until the EE
-binds its server, which needs IRX start routines on an IOP thread). Movies are skipped. The fight runs at ~40 game
-frames per second (`scripts/regress.sh`), the menus at ~55. Next: movies (stream callbacks in demux, see above), the
-fight's remaining speed, the rest of the modes.
+binds its server, which needs IRX start routines on an IOP thread). Characters and stage draw with depth. Movies
+are skipped. The fight runs at ~40-50 game frames per second (`scripts/regress.sh`), the menus at ~55. Seen once or
+twice: a stall on the boot memory card check screen, not explained yet. Next: movies (stream callbacks in demux,
+see above), the fight's remaining speed, the rest of the modes.
