@@ -113,6 +113,9 @@ Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 
 menu) run on PS2Recomp `main` 4376493, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
 game's code, so SDRDRV and the Standard Kit run in the IOP emulator (SDRDRV's start routine blocks until the EE
 binds its server, which needs IRX start routines on an IOP thread). Characters and stage draw with depth. Movies
-are skipped. The fight runs at ~42 game frames per second on average (33-50 depending on the fight, `scripts/regress.sh`), the menus at ~55. VIF1/VU1 run on the worker thread with GS lag (the override; PS2X_VIF1_THREAD=0 turns it off): on the EE thread, presentation and raster drains pushed fight frames past a field, 32 fps. Each game frame still costs the EE thread ~15 ms of host time, so frames that miss a field take two. Seen once or
+are skipped. The fight runs at ~42 game frames per second on average (33-50 depending on the fight, `scripts/regress.sh`), the menus at ~55. VIF1/VU1 run on the worker thread with GS lag (the override; PS2X_VIF1_THREAD=0 turns it off): on the EE thread, presentation and raster drains pushed fight frames past a field, 32 fps. With the worker on, the EE thread is ~17% busy and the limit is the CPU rasterizer: its 4 workers do real pixel
+work and the GS front end waits on queue slots. On the 8-core box 4 workers is the best count (2: ~34 fps, 3: ~41,
+4: ~51, 8: ~7, 12: ~5: idle workers spin then yield instead of sleeping and starve the busy threads), so the next
+gain has to come from the CPU rasterizer itself. Seen once or
 twice: a stall on the boot memory card check screen, not explained yet. Next: movies (stream callbacks in demux,
 see above), the fight's remaining speed, the rest of the modes.
