@@ -11,7 +11,7 @@
 #   gs_frames_*, fps_mean, frames_presented
 #                     game frames (the counter at 0x52C354) per 5 s state dump, over the fight once reached, else
 #                     over the run; fps_p10 and frames_over_25ms are NA: the runtime logs no per-frame present times
-#   REGRESS_HANG_SECS   default 20
+#   REGRESS_HANG_SECS   default 60 (the loading screen before the fight stays still for more than 20 s)
 #   REGRESS_FIGHT_SECS  length of the fight once reached (default 45)
 #   REGRESS_ROUTE_SECS  give up on reaching the fight after this long (default 180)
 #   FFOP_ELF            game ELF (default: game/SLPS_255.45 of this repo)
@@ -21,7 +21,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 target=$1
 out=$2
 elf=${FFOP_ELF:-$root/game/SLPS_255.45}
-hang_secs=${REGRESS_HANG_SECS:-20}
+hang_secs=${REGRESS_HANG_SECS:-60}
 fight_secs=${REGRESS_FIGHT_SECS:-45}
 route_secs=${REGRESS_ROUTE_SECS:-180}
 period=5
