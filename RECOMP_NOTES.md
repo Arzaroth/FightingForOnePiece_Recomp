@@ -121,7 +121,8 @@ environment says otherwise.
   0x80000704), so it needs the SifRegisterRpc fix (args 5-7 in t0-t2).
 - Sound: `PS2X_SPU2_WALLCLOCK=1 PS2X_IOP_WALLCLOCK=1`. FFOP streams through SPU2 voices, never AutoDMA (ADMAS stays
   0), so the AutoDMA starvation SC3 found does not apply; a WAV capture matches the IOP-clock run.
-- Fights hold 60 game frames per second (5 fights of 60 s, 300 frames per 5 s), against 35-51 on the CPU GS.
+- Fights hold 60 game frames per second (5 fights of 60 s, 300 frames per 5 s), against 35-51 on the CPU GS, and
+  still 60 at `PS2X_GS_SCALE=2` (1280x896 targets, the default), menus and intro cinematics included.
 - `rand` (0x1D9220) runs the game's own code: the runtime stub returned 15-bit values while the game scales by 2^-31,
   so every random pick was 0 and 0x13C818 (a random entry different from the last one) looped forever on Ace's
   special move, on every renderer.
