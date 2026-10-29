@@ -34,9 +34,21 @@ else()
         "VU1 runs in the interpreter (scripts/compile_vu1.sh)")
 endif()
 
-target_sources(ps2EntryRunner PRIVATE ${FFOP_GENERATED_SOURCES} ${FFOP_RUNTIME_SOURCES} ${FFOP_VU1_SOURCES})
+file(GLOB FFOP_IOP_SOURCES CONFIGURE_DEPENDS "${FFOP_GENERATED_DIR}/iop/*.cpp")
+if(FFOP_IOP_SOURCES)
+    set_source_files_properties(${FFOP_IOP_SOURCES} TARGET_DIRECTORY ps2EntryRunner PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON)
+else()
+    message(STATUS "FightingForOnePiece_Recomp: no recompiled IOP modules in ${FFOP_GENERATED_DIR}/iop, "
+        "the IOP interprets them (scripts/recomp_iop.sh)")
+endif()
+
+target_sources(ps2EntryRunner PRIVATE ${FFOP_GENERATED_SOURCES} ${FFOP_RUNTIME_SOURCES} ${FFOP_VU1_SOURCES}
+    ${FFOP_IOP_SOURCES})
 target_include_directories(ps2EntryRunner PRIVATE "${FFOP_GENERATED_DIR}")
 
 list(LENGTH FFOP_GENERATED_SOURCES _ffop_count)
 list(LENGTH FFOP_VU1_SOURCES _ffop_vu1_count)
-message(STATUS "FightingForOnePiece_Recomp: ${_ffop_count} generated sources, ${_ffop_vu1_count} compiled VU1 file(s)")
+list(LENGTH FFOP_IOP_SOURCES _ffop_iop_count)
+message(STATUS "FightingForOnePiece_Recomp: ${_ffop_count} generated sources, ${_ffop_vu1_count} compiled VU1 file(s), "
+    "${_ffop_iop_count} recompiled IOP module(s)")
