@@ -109,14 +109,13 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (`ffop/native`: native/renderer with the fixes below), set by the override unless the
+On PS2Recomp's native target (`ffop/native`: native/renderer 175ed5c with the fixes below), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
   0x5178b (alpha GEQUAL 0x78, AFAIL FB_ONLY); the back end discarded every failing pixel, so the watermarks, title
   gradient and name plate of character select were missing (native/gs-afail: a second pass for the failing pixels
-  under AFAIL's masks). With GPU presentation `PS2X_FRAME_DUMP` writes nothing, which blinds `scripts/regress.sh`'s
-  still-picture check: `PS2X_GS_NATIVE_CPUPRESENT=1` for harness runs until the frame-dump fix reaches native/renderer.
+  under AFAIL's masks).
 - IOP: the 14 modules recompile with nothing left to the interpreter (`scripts/recomp_iop.sh`); `PS2X_IOP_NATIVE=1`
   runs a module natively when its file hash and base match the dump. The game registers an EE RPC server (sid
   0x80000704), so it needs the SifRegisterRpc fix (args 5-7 in t0-t2).
