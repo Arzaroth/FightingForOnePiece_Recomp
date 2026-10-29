@@ -26,8 +26,9 @@ file(GLOB FFOP_RUNTIME_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/runtime/*.
 
 file(GLOB FFOP_VU1_SOURCES CONFIGURE_DEPENDS "${FFOP_GENERATED_DIR}/vu1/*.cpp")
 if(FFOP_VU1_SOURCES)
-    set_source_files_properties(${FFOP_VU1_SOURCES} PROPERTIES
+    set_source_files_properties(${FFOP_VU1_SOURCES} TARGET_DIRECTORY ps2EntryRunner PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
+        SKIP_PRECOMPILE_HEADERS ON
         COMPILE_OPTIONS "-O3;-g0")
 else()
     message(STATUS "FightingForOnePiece_Recomp: no compiled VU1 microcode in ${FFOP_GENERATED_DIR}/vu1, "
