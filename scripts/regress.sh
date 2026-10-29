@@ -144,7 +144,7 @@ read -r median minimum mean count < <(echo "$samples" | sort -n | awk -v p=$peri
 frames_presented=$(watch_samples | awk '{ v = strtonum("0x" $4) } END { print NR ? v : "NA" }')
 
 errors='error|fatal|abort|exception|unimplemented|unhandled|invalid|crash|assert'
-underruns=$(grep -ao '^\[spu2:stats\].* underruns [0-9]*' "$log" | tail -1 | awk '{ print $NF }')
+underruns=$(grep -ao '^\[spu2:stats\].* underruns [0-9]*' "$log" | tail -1 | awk '{ print $NF }' || true)
 grep -a -v '^\[state\]' "$log" | grep -a -i -E "$errors" \
     | sed -E 's/0x[0-9a-fA-F]+/X/g; s/[0-9]+/N/g' | sort | uniq -c | sort -rn > "$out/errors.txt" || true
 error_lines=$(grep -a -v '^\[state\]' "$log" | grep -a -c -i -E "$errors" || true)
