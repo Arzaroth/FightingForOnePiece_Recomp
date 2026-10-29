@@ -154,7 +154,6 @@ stubs = [
   "__malloc_unlock@0x001D8678",
   "_printf_r@0x001D86D0",
   "printf@0x001D8710",
-  "rand@0x001D9220",
   "sprintf@0x001D9680",
   "strcat@0x001D96F0",
   "strchr@0x001D981C",
