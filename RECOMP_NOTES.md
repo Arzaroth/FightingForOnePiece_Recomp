@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (`ffop/native`: native/renderer 8714412, plus tlotr/iop-native-late and the SifRegisterRpc fix), set by the override unless the
+On PS2Recomp's native target (native/renderer 50597c6, which carries the fixes below), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
@@ -129,7 +129,7 @@ environment says otherwise.
 
 ## Status
 
-Playable on the native target (branch `native`, PS2Recomp `ffop/native` on native/renderer 8714412): title, main
+Playable on the native target (branch `native`, PS2Recomp native/renderer 50597c6): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in

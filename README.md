@@ -74,7 +74,7 @@ disc files ──► ps2_analyzer (+ Ghidra, hint lists) ──► recomp/ffop.t
 - `runtime/ffop_overrides.cpp` holds the game-specific bindings, matched to the ELF by entry point and CRC.
 
 The runtime is the `PS2Recomp/` git submodule: [boubou666/PS2Recomp](https://github.com/boubou666/PS2Recomp), branch
-`ffop/native` (`native/renderer` plus two fixes on their way there), shared with the *Soulcalibur III*, *Twisted Metal:
+`native/renderer`, shared with the *Soulcalibur III*, *Twisted Metal:
 Black*, *Valkyrie Profile 2: Silmeria*, *The Lord of the Rings: The Third Age*, *Smash Court Tennis Pro Tournament 2*
 and *Drakengard* recompilations. The top-level `CMakeLists.txt` builds its runtime, swaps its placeholder function
 table for the generated one and links the generated code, `runtime/`, the compiled VU1 microcode and the recompiled
