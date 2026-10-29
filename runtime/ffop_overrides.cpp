@@ -1,7 +1,12 @@
 #include "game_overrides.h"
 #include "ps2_runtime.h"
+#include "runtime/ee_scheduler.h"
+#include "runtime/frame_pacer.h"
 #include "runtime/gs/gs_cpu_backend.h"
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 
@@ -13,8 +18,9 @@ namespace
     constexpr uint32_t kPlayMovie = 0x001B6528u;
 
     // The native target by default: the GS translated to OpenGL at twice the PS2's resolution, the IOP modules
-    // recompiled (scripts/recomp_iop.sh), the SPU2 and the IOP on the host clock. The runtime reads these switches at different points of its start, some
-    // before game overrides apply, so they are set before main; a value already in the environment wins.
+    // recompiled (scripts/recomp_iop.sh), the SPU2 and the IOP on the host clock. The runtime reads these switches at
+    // different points of its start, some before game overrides apply, so they are set before main; a value already in
+    // the environment wins.
     [[maybe_unused]] const bool kNativeDefaults = []
     {
         constexpr const char *kDefaults[][2] = {{"PS2X_GS_RENDERER", "native"}, {"PS2X_GS_SCALE", "2"},
@@ -39,6 +45,57 @@ namespace
         ctx->pc = getRegU32(ctx, 31);
     }
 
+    // The main loop's frame wait (0x197008): signals one semaphore, waits on another that the GS vsync callback
+    // (0x19E5F8) releases, and returns the CSR FIELD bit the callback saved (gp-0x1708) when the display is interlaced
+    // (sceGsGetGParam()->interlace, 0x4E3F40), else 1. Natively the frame ends on the host clock instead: the main
+    // thread sleeps until the frame cap's deadline while the game's other threads run. The engine steps a fixed amount
+    // per frame, so the cap (60) keeps the game's speed.
+    constexpr uint32_t kFrameWait = 0x0019E718u;
+    constexpr uint32_t kGsGParam = 0x004E3F40u;
+
+    std::chrono::steady_clock::time_point g_frameStart{};
+    uint64_t g_frameStartCycle = 0;
+
+    void nativeFrameWait(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+    {
+        using Clock = std::chrono::steady_clock;
+        EeScheduler &ee = runtime->eeScheduler();
+        const Clock::time_point now = Clock::now();
+        if (g_frameStart == Clock::time_point{})
+        {
+            g_frameStart = now;
+            g_frameStartCycle = ee.currentCycle();
+        }
+        Clock::time_point deadline = now;
+        if (const uint32_t cap = runtime->framePacer().cap(); cap != 0u)
+            deadline = std::max(now, g_frameStart + std::chrono::duration_cast<Clock::duration>(
+                                                        std::chrono::duration<double>(1.0 / cap)));
+        const uint32_t gp = getRegU32(ctx, 28);
+        ee.waitHostDeadline(
+            deadline,
+            [runtime]
+            {
+                EeScheduler &ee = runtime->eeScheduler();
+                const Clock::time_point woke = Clock::now();
+                const double elapsed = std::min(std::chrono::duration<double>(woke - g_frameStart).count(),
+                                                FramePacer::kMaxStepSeconds);
+                const uint64_t due = g_frameStartCycle + static_cast<uint64_t>(elapsed * EeScheduler::kEeClockHz);
+                if (const uint64_t cycle = ee.currentCycle(); due > cycle)
+                    ee.accountCycles(static_cast<uint32_t>(std::min<uint64_t>(due - cycle, UINT32_MAX)));
+                g_frameStart = woke;
+                g_frameStartCycle = ee.currentCycle();
+                ee.presentGuestFrame();
+            },
+            [rdram, gp](R5900Context &resumed)
+            {
+                int32_t field = 1;
+                if (*reinterpret_cast<const int16_t *>(rdram + kGsGParam) == 1)
+                    field = (rdram[(gp - 0x1708u + 1u) & PS2_RAM_MASK] >> 5) & 1;
+                setReturnS32(&resumed, field);
+                resumed.pc = getRegU32(&resumed, 31);
+            });
+    }
+
     void applyFightingForOnePiece(PS2Runtime &runtime)
     {
         // The title and menus are stacks of full-screen textured sprites: at the default 4 pixels per GS cycle the
@@ -56,6 +113,14 @@ namespace
         }
         if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
             runtime.registerFunction(kPlayMovie, playMovieSkipped);
+        // Frames on the host clock (nativeFrameWait), each showing the newest finished buffer (the game flips after its
+        // frame wait returns). FFOP_NATIVE_FRAMES=0 keeps the vblank loop.
+        if (const char *frames = std::getenv("FFOP_NATIVE_FRAMES"); !(frames && frames[0] == '0'))
+        {
+            runtime.eeScheduler().setNativeFrames(true);
+            runtime.gsForPresentation().setPresentNewestDisplayBuffer(true);
+            runtime.registerFunction(kFrameWait, nativeFrameWait);
+        }
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
     }
 }
