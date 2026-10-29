@@ -12,6 +12,26 @@ namespace
     // callback's memcpy then wipes most of RAM. PS2X_FFOP_MOVIES=1 plays them anyway.
     constexpr uint32_t kPlayMovie = 0x001B6528u;
 
+    // The native target by default: the GS translated to OpenGL, the IOP modules recompiled (scripts/recomp_iop.sh),
+    // the SPU2 and the IOP on the host clock. The runtime reads these switches at different points of its start, some
+    // before game overrides apply, so they are set before main; a value already in the environment wins.
+    [[maybe_unused]] const bool kNativeDefaults = []
+    {
+        constexpr const char *kDefaults[][2] = {{"PS2X_GS_RENDERER", "native"}, {"PS2X_IOP_NATIVE", "1"},
+                                                {"PS2X_SPU2_WALLCLOCK", "1"}, {"PS2X_IOP_WALLCLOCK", "1"}};
+        for (const auto &[name, value] : kDefaults)
+        {
+            if (std::getenv(name))
+                continue;
+#ifdef _WIN32
+            _putenv_s(name, value);
+#else
+            setenv(name, value, 0);
+#endif
+        }
+        return true;
+    }();
+
     void playMovieSkipped(uint8_t *, R5900Context *ctx, PS2Runtime *)
     {
         setReturnS32(ctx, 0);
