@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (`ffop/native`: native/renderer 175ed5c with the fixes below), set by the override unless the
+On PS2Recomp's native target (`ffop/native`: native/renderer 8714412, plus tlotr/iop-native-late and the SifRegisterRpc fix), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
