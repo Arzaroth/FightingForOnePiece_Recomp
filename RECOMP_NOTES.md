@@ -133,7 +133,10 @@ Playable on the native target (branch `native`, PS2Recomp native/renderer 50597c
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
-`playMovie`). The other modes and the memory card are not checked yet.
+`playMovie`). The other modes reach their screens (VS Fight vs CPU into a two-player character select, Gamble's rank
+select, Training, Replay's file select, the option menu; Recording needs 30,000,000 berries first), not played through
+yet. Memory card: Option > DATA SAVE creates `BISLPS-25545sys` on `mc0/` next to the ELF (system data 63488 bytes,
+`icon.sys`, `ffop.bin`), and the next boot reads it back.
 
 The CPU GS path (`PS2X_GS_RENDERER=cpu`, the interpreter IOP without `scripts/recomp_iop.sh`) still works: there the
 fight runs at 33-50 game frames per second, limited by the CPU rasterizer. VIF1/VU1 run on the worker thread with GS
@@ -143,4 +146,5 @@ that never reach the fight are not a game hang: when the box is loaded, the boot
 wall-clock `PS2X_PAD_SCRIPT` presses land on other menu states.
 
 Next: movies (stream callbacks in the MPEG demux, see above; JC2 found the runtime's sceMpeg hands each audio PES
-payload to the game's callbacks with its private-stream-1 sub-header), the other modes, the memory card.
+payload to the game's callbacks with its private-stream-1 sub-header), the native frame loop (native/frame-sleep's
+EeScheduler::waitHostDeadline), playing the other modes through.

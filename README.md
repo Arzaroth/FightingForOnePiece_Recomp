@@ -32,7 +32,8 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 Mode against the CPU, rounds, special moves and their cut-ins), with music and sound effects, at a steady 60 game
 frames per second. It runs on PS2Recomp's native target: the GS is translated to OpenGL at twice the PS2's resolution
 instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), and the
-sound runs on the PC's clock. Movies are skipped; the other modes and the memory card are not checked yet.
+sound runs on the PC's clock. VS Fight, Gamble, Training and the options reach their screens, and the memory card
+saves and loads the game's data. Movies are skipped.
 
 | Milestone | |
 |---|:---:|
@@ -43,8 +44,8 @@ sound runs on the PC's clock. Movies are skipped; the other modes and the memory
 | Music and sound effects | ✅ |
 | Native target: GS on OpenGL at 2x, IOP modules recompiled, sound on the PC clock, 60 fps | ✅ |
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
-| Other modes (VS, Gamble, Training, Replay...) | ⏳ |
-| Memory card: save and load | ⏳ |
+| Other modes: VS Fight, Gamble, Training, Replay, Option menus | 🔧 |
+| Memory card: save and load | ✅ |
 
 ✅ works · 🔧 in progress · ⏳ not reached yet
 
