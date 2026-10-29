@@ -31,8 +31,8 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 **Playable.** From the title screen through the main menu, character select and VS screen into 3D fights (Fighting
 Mode against the CPU, rounds, special moves and their cut-ins), with music and sound effects, at a steady 60 game
 frames per second. It runs on PS2Recomp's native target: the GS is translated to OpenGL at twice the PS2's resolution
-instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), and the
-sound runs on the PC's clock. VS Fight, Gamble, Training and the options reach their screens, and the memory card
+instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), the
+frames and the sound run on the PC's clock (no emulated vblanks). VS Fight, Gamble, Training and the options reach their screens, and the memory card
 saves and loads the game's data. Movies are skipped.
 
 | Milestone | |
@@ -42,7 +42,7 @@ saves and loads the game's data. Movies are skipped.
 | Title screen, menus, character select | ✅ |
 | Fights (Fighting Mode vs CPU) | ✅ |
 | Music and sound effects | ✅ |
-| Native target: GS on OpenGL at 2x, IOP modules recompiled, sound on the PC clock, 60 fps | ✅ |
+| Native target: GS on OpenGL at 2x, IOP modules recompiled, frames and sound on the PC clock, 60 fps | ✅ |
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
 | Other modes: VS Fight, Gamble, Training, Replay, Option menus | 🔧 |
 | Memory card: save and load | ✅ |
@@ -75,7 +75,7 @@ disc files ──► ps2_analyzer (+ Ghidra, hint lists) ──► recomp/ffop.t
 - `runtime/ffop_overrides.cpp` holds the game-specific bindings, matched to the ELF by entry point and CRC.
 
 The runtime is the `PS2Recomp/` git submodule: [boubou666/PS2Recomp](https://github.com/boubou666/PS2Recomp), branch
-`native/renderer`, shared with the *Soulcalibur III*, *Twisted Metal:
+`native/frame-sleep` (`native/renderer` plus the frame-sleep helper, on its way there), shared with the *Soulcalibur III*, *Twisted Metal:
 Black*, *Valkyrie Profile 2: Silmeria*, *The Lord of the Rings: The Third Age*, *Smash Court Tennis Pro Tournament 2*
 and *Drakengard* recompilations. The top-level `CMakeLists.txt` builds its runtime, swaps its placeholder function
 table for the generated one and links the generated code, `runtime/`, the compiled VU1 microcode and the recompiled
@@ -107,7 +107,8 @@ scripts/run.sh                                                          # ps2Ent
 The game runs on PS2Recomp's native target by default: the GS translated to OpenGL (`PS2X_GS_RENDERER=native`) at
 twice the PS2's resolution (`PS2X_GS_SCALE=2`),
 the IOP modules recompiled (`PS2X_IOP_NATIVE=1`), the SPU2 and the IOP on the host clock (`PS2X_SPU2_WALLCLOCK=1`,
-`PS2X_IOP_WALLCLOCK=1`). Export any of them to change it, e.g. `PS2X_GS_RENDERER=cpu` for the CPU GS. Without
+`PS2X_IOP_WALLCLOCK=1`), and its frames end on the PC's clock (`FFOP_NATIVE_FRAMES=0` keeps the PS2's vblanks).
+Export any of them to change it, e.g. `PS2X_GS_RENDERER=cpu` for the CPU GS. Without
 `scripts/recomp_iop.sh` the IOP interprets its modules as before.
 
 The extracted disc folder is the game's `cdrom0:`; the memory cards (`mc0/`, `mc1/`) are created next to the ELF in

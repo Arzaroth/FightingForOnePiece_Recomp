@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (native/renderer 50597c6, which carries the fixes below), set by the override unless the
+On PS2Recomp's native target (native/frame-sleep c57e8dd: native/renderer 97ac959 with the frame-sleep helper), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
@@ -123,13 +123,19 @@ environment says otherwise.
   0), so the AutoDMA starvation SC3 found does not apply; a WAV capture matches the IOP-clock run.
 - Fights hold 60 game frames per second (5 fights of 60 s, 300 frames per 5 s), against 35-51 on the CPU GS, and
   still 60 at `PS2X_GS_SCALE=2` (1280x896 targets, the default), menus and intro cinematics included.
+- Frames: the main loop's frame wait 0x19E718 (it signals one semaphore and waits on another that the GS vsync
+  callback 0x19E5F8 releases) is replaced by EeScheduler::waitHostDeadline (native/frame-sleep): the main thread
+  sleeps until the frame cap's deadline while the other threads run, then the real EE time is charged and the frame
+  presented, showing the newest finished buffer (the game flips after the wait). The engine steps a fixed amount per
+  frame (nothing reads the vblank count the callback keeps at gp-0x2744), so the cap of 60 keeps the game's speed.
+  Fights at 298-300 frames per 5 s, sound unchanged. `FFOP_NATIVE_FRAMES=0` keeps the vblank loop.
 - `rand` (0x1D9220) runs the game's own code: the runtime stub returned 15-bit values while the game scales by 2^-31,
   so every random pick was 0 and 0x13C818 (a random entry different from the last one) looped forever on Ace's
   special move, on every renderer.
 
 ## Status
 
-Playable on the native target (branch `native`, PS2Recomp native/renderer 50597c6): title, main
+Playable on the native target (PS2Recomp native/frame-sleep c57e8dd, frames on the host clock): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
@@ -146,5 +152,5 @@ that never reach the fight are not a game hang: when the box is loaded, the boot
 wall-clock `PS2X_PAD_SCRIPT` presses land on other menu states.
 
 Next: movies (stream callbacks in the MPEG demux, see above; JC2 found the runtime's sceMpeg hands each audio PES
-payload to the game's callbacks with its private-stream-1 sub-header), the native frame loop (native/frame-sleep's
-EeScheduler::waitHostDeadline), playing the other modes through.
+payload to the game's callbacks with its private-stream-1 sub-header), playing the other modes through, and the
+submodule back on native/renderer once native/frame-sleep is merged there.
