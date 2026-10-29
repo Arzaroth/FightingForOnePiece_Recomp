@@ -87,8 +87,15 @@ scripts/build_tools.sh                                                  # ps2_re
 scripts/recomp.sh                                                       # game/SLPS_255.45 + recomp/ffop.toml -> generated/
 scripts/compile_vu1.sh                                                  # VU1 microcode in the ELF -> generated/vu1/
 scripts/build_runtime.sh                                                # runtime + generated code -> build/game (RelWithDebInfo)
+scripts/recomp_iop.sh                                                   # one boot dumps the IOP modules -> generated/iop/
+scripts/build_runtime.sh                                                # again, with the recompiled IOP modules
 scripts/run.sh                                                          # ps2EntryRunner game/SLPS_255.45
 ```
+
+The game runs on PS2Recomp's native target by default: the GS translated to OpenGL (`PS2X_GS_RENDERER=native`),
+the IOP modules recompiled (`PS2X_IOP_NATIVE=1`), the SPU2 and the IOP on the host clock (`PS2X_SPU2_WALLCLOCK=1`,
+`PS2X_IOP_WALLCLOCK=1`). Export any of them to change it, e.g. `PS2X_GS_RENDERER=cpu` for the CPU GS. Without
+`scripts/recomp_iop.sh` the IOP interprets its modules as before.
 
 The extracted disc folder is the game's `cdrom0:`; the memory cards (`mc0/`, `mc1/`) are created next to the ELF in
 `game/`. `scripts/analyze.sh` reruns `ps2_analyzer` into `build/analyzer.toml`; `recomp/ffop.toml` started from that
