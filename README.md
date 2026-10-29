@@ -115,7 +115,9 @@ The extracted disc folder is the game's `cdrom0:`; the memory cards (`mc0/`, `mc
 `game/`. `scripts/analyze.sh` reruns `ps2_analyzer` into `build/analyzer.toml`; `recomp/ffop.toml` started from that
 output and is edited by hand, so merge new analyzer output into it rather than replacing it.
 
-`JOBS=<n>` sets the build parallelism of every script (default: all cores). `scripts/build_runtime.sh Release` or
+`scripts/remote_build.sh` builds the runner on another x86-64 Linux machine over ssh (`REMOTE_HOST`, default
+`stallman`) and copies it back into `build/game`; it links against this machine's FFmpeg, copied there once, and the
+game still runs here. `JOBS=<n>` sets the build parallelism of every script (default: all cores). `scripts/build_runtime.sh Release` or
 `Debug` picks another build type, and `CXX` another compiler (Clang is used when it is installed).
 `scripts/ffoprun.sh <name> <seconds> [VAR=value...]` runs the game for that long with a state dump every 5 seconds,
 logs to `build/runs/<name>.log` and screenshots the window.
