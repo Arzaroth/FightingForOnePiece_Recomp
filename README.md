@@ -8,13 +8,13 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 ![Platform](https://img.shields.io/badge/platform-Linux-1b8cff)
 ![Compiler](https://img.shields.io/badge/compiler-Clang-1b8cff)
 ![Based on](https://img.shields.io/badge/based%20on-PS2Recomp-17a35b)
-![Status](https://img.shields.io/badge/status-bring--up-c94f4f)
+![Status](https://img.shields.io/badge/status-playable-17a35b)
 
 <img src="docs/screenshots/fight.jpg" width="49%"> <img src="docs/screenshots/title_screen.jpg" width="49%">
 <img src="docs/screenshots/main_menu.jpg" width="49%"> <img src="docs/screenshots/character_select.jpg" width="49%">
-<img src="docs/screenshots/fight_intro.jpg" width="49%"> <img src="docs/screenshots/stage.jpg" width="49%">
+<img src="docs/screenshots/fight_intro.jpg" width="49%"> <img src="docs/screenshots/special_move.jpg" width="49%">
 
-<sub>Captured from the running port (640x448, CPU rasterizer).</sub>
+<sub>Captured from the running port: the GS translated to OpenGL at 2x (1280x896).</sub>
 
 </div>
 
@@ -28,16 +28,22 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 
 ## Status
 
-**Bring-up.** Plays from the title screen through the main menu, character select and VS screen into a 3D fight (Luffy vs Ace), the title at about 54 game frames per second with the CPU rasterizer. Movies are skipped; sound and long play sessions are untested.
+**Playable.** From the title screen through the main menu, character select and VS screen into 3D fights (Fighting
+Mode against the CPU, rounds, special moves and their cut-ins), with music and sound effects, at a steady 60 game
+frames per second. It runs on PS2Recomp's native target: the GS is translated to OpenGL at twice the PS2's resolution
+instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), and the
+sound runs on the PC's clock. Movies are skipped; the other modes and the memory card are not checked yet.
 
 | Milestone | |
 |---|:---:|
 | Map and recompile the main ELF | ✅ |
 | Boot: EE kernel, the game's own IOP modules, CD reads from the disc files | ✅ |
+| Title screen, menus, character select | ✅ |
+| Fights (Fighting Mode vs CPU) | ✅ |
+| Music and sound effects | ✅ |
+| Native target: GS on OpenGL at 2x, IOP modules recompiled, sound on the PC clock, 60 fps | ✅ |
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
-| Title screen, menus | 🔧 |
-| Music and sound effects | ⏳ |
-| Fights | 🔧 |
+| Other modes (VS, Gamble, Training, Replay...) | ⏳ |
 | Memory card: save and load | ⏳ |
 
 ✅ works · 🔧 in progress · ⏳ not reached yet
@@ -52,29 +58,34 @@ disc files ──► ps2_analyzer (+ Ghidra, hint lists) ──► recomp/ffop.t
                        ps2_recomp ──► C++ (one file per function)
                                   │
                  ELF MPG uploads ──► ps2_vu_aot ──► generated/vu1/
+           IRX as the IOP loads them ──► iop_recomp.py ──► generated/iop/
                                   │
-   PS2Recomp runtime: EE kernel HLE · DMAC · GIF/GS · VIF/VU0/VU1 ─┼─► ps2EntryRunner
-   PS2Recomp IOP:     R3000A interpreter running the game's own IRX · SPU2 · SIO2
+   PS2Recomp runtime: EE kernel HLE · DMAC · GIF → GS on OpenGL · VIF/VU0/VU1 ─┼─► ps2EntryRunner
+   PS2Recomp IOP:     the game's own IRX, recompiled · SPU2 on the PC clock · SIO2
 ```
 
 - The ELF has no symbols. `ps2_analyzer` maps the functions and binds the SCE SDK ones it recognises to the runtime's
   handlers.
 - PS2Recomp turns every function into C++. The VU1 microcode found in the ELF is compiled ahead of time by
-  `ps2_vu_aot`; microcode loaded from the data archive runs in the interpreter.
+  `ps2_vu_aot`; microcode loaded from the data archive runs in the interpreter. The IOP modules are dumped as the
+  IOP loads them and recompiled the same way (`scripts/recomp_iop.sh`).
+- The GS is not emulated: its drawing state and primitives become OpenGL draws into GPU render targets
+  (PS2Recomp's GS native back end), rendered at 2x.
 - `runtime/ffop_overrides.cpp` holds the game-specific bindings, matched to the ELF by entry point and CRC.
 
 The runtime is the `PS2Recomp/` git submodule: [boubou666/PS2Recomp](https://github.com/boubou666/PS2Recomp), branch
-`main`, shared with the *Soulcalibur III*, *Twisted Metal: Black*, *Valkyrie Profile 2: Silmeria*, *The Lord of the
-Rings: The Third Age* and *Drakengard* recompilations. The top-level `CMakeLists.txt` builds its runtime, swaps its
-placeholder function table for the generated one and links the generated code, `runtime/` and the compiled VU1
-microcode into `ps2EntryRunner`. Generic fixes go to boubou666's `main`.
+`ffop/native` (`native/renderer` plus two fixes on their way there), shared with the *Soulcalibur III*, *Twisted Metal:
+Black*, *Valkyrie Profile 2: Silmeria*, *The Lord of the Rings: The Third Age*, *Smash Court Tennis Pro Tournament 2*
+and *Drakengard* recompilations. The top-level `CMakeLists.txt` builds its runtime, swaps its placeholder function
+table for the generated one and links the generated code, `runtime/`, the compiled VU1 microcode and the recompiled
+IOP modules into `ps2EntryRunner`. Generic fixes go to boubou666's `native/*` branches, merged into `native/renderer`.
 
 ## Requirements
 
 - Linux (developed on Arch)
 - CMake 3.21+, Ninja, Clang with C++20, rsync, and bsdtar (libarchive) to extract the disc
 - FFmpeg development libraries (`libavcodec`, `libavformat`, `libavutil`, `libswresample`, `libswscale`)
-- X11/Wayland and OpenGL development headers (raylib is fetched and built by the runtime)
+- X11/Wayland and OpenGL development headers (raylib is fetched and built by the runtime), a GPU with OpenGL 4.5
 - Your own copy of `SLPS-25545` as a disc image (the extracted ELF is checked against the hash above)
 
 ## Build and run

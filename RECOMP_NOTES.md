@@ -129,15 +129,18 @@ environment says otherwise.
 
 ## Status
 
-Title, main menu, character select, VS screen and the Luffy vs Ace fight (Round 1, Ready, GO, attacks, the pause
-menu) run on PS2Recomp `main` 4376493, with sound: `sceSdRemoteInit`, `sceSdTransToIOP` and `sceSdRemote` run the
-game's code, so SDRDRV and the Standard Kit run in the IOP emulator (SDRDRV's start routine blocks until the EE
-binds its server, which needs IRX start routines on an IOP thread). Characters and stage draw with depth. Movies
-are skipped. The fight runs at ~42 game frames per second on average (33-50 depending on the fight, `scripts/regress.sh`), the menus at ~55. VIF1/VU1 run on the worker thread with GS lag (the override; PS2X_VIF1_THREAD=0 turns it off): on the EE thread, presentation and raster drains pushed fight frames past a field, 32 fps. With the worker on, the EE thread is ~17% busy and the limit is the CPU rasterizer: its 4 workers do real pixel
-work and the GS front end waits on queue slots. On the 8-core box 4 workers is the best count (2: ~34 fps, 3: ~41,
-4: ~51, 8: ~7, 12: ~5: idle workers spin then yield instead of sleeping and starve the busy threads), so the next
-gain has to come from the CPU rasterizer itself. The rare harness runs that never reach the fight are not a game
-hang: when the box is loaded (another port's build), the EE waits seconds for the VIF1 worker during boot (2.6 s and
-5 s per 5 s sample instead of ~50 ms), the game falls ~3 s behind, and the wall-clock `PS2X_PAD_SCRIPT` presses land
-on other menu states (1 of 6 boots on 2026-10-29, parked on character select). Next: movies (stream callbacks in demux,
-see above), the fight's remaining speed, the rest of the modes.
+Playable on the native target (branch `native`, PS2Recomp `ffop/native` on native/renderer 8714412): title, main
+menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
+random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
+second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
+`playMovie`). The other modes and the memory card are not checked yet.
+
+The CPU GS path (`PS2X_GS_RENDERER=cpu`, the interpreter IOP without `scripts/recomp_iop.sh`) still works: there the
+fight runs at 33-50 game frames per second, limited by the CPU rasterizer. VIF1/VU1 run on the worker thread with GS
+lag (the override; `PS2X_VIF1_THREAD=0` turns it off); on the 8-core box 4 raster workers is the best count (2: ~34
+fps, 3: ~41, 4: ~51, 8: ~7, 12: ~5: idle workers spin then yield and starve the busy threads). The rare harness runs
+that never reach the fight are not a game hang: when the box is loaded, the boot falls a few seconds behind and the
+wall-clock `PS2X_PAD_SCRIPT` presses land on other menu states.
+
+Next: movies (stream callbacks in the MPEG demux, see above; JC2 found the runtime's sceMpeg hands each audio PES
+payload to the game's callbacks with its private-stream-1 sub-header), the other modes, the memory card.
