@@ -9,10 +9,16 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+
+namespace ps2_stubs
+{
+    void setMpegMaxPicturesAhead(size_t pictures);
+}
 
 namespace
 {
@@ -20,6 +26,10 @@ namespace
     // runtime's libmpeg calls the game's audio stream callback before the game has set up its audio ring, and the
     // callback's memcpy then wipes most of RAM. PS2X_FFOP_MOVIES=1 plays them anyway.
     constexpr uint32_t kPlayMovie = 0x001B6528u;
+    // The movie player pre-fills by demuxing until sceMpegDemuxPssRing takes less than it is given. On the console
+    // that happens when the 0x17E300-byte work area passed to sceMpegCreate is full, about 3 decoded 640x448 pictures;
+    // with the runtime's default of 128 pictures ahead it never happens before the end of the file.
+    constexpr size_t kMoviePicturesAhead = 3u;
 
     // The native target by default: the GS translated to OpenGL at twice the PS2's resolution, the IOP modules
     // recompiled (scripts/recomp_iop.sh), the SPU2 and the IOP on the host clock. The runtime reads these switches at
@@ -163,6 +173,8 @@ namespace
         }
         if (const char *movies = std::getenv("PS2X_FFOP_MOVIES"); !(movies && movies[0] == '1'))
             runtime.registerFunction(kPlayMovie, playMovieSkipped);
+        else
+            ps2_stubs::setMpegMaxPicturesAhead(kMoviePicturesAhead);
         // Frames on the host clock (nativeFrameWait), each showing the newest finished buffer (the game flips after its
         // frame wait returns). FFOP_NATIVE_FRAMES=0 keeps the vblank loop.
         if (const char *frames = std::getenv("FFOP_NATIVE_FRAMES"); !(frames && frames[0] == '0'))
