@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (native/renderer 71524c5, VU1 sandbox, MPEG host clock and the GS page coherence included), set by the override unless the
+On PS2Recomp's native target (native/renderer 71524c5: MPEG host clock and the GS page coherence included; VU1 still on the sandbox), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
@@ -129,9 +129,12 @@ environment says otherwise.
   presented, showing the newest finished buffer (the game flips after the wait). The engine steps a fixed amount per
   frame (nothing reads the vblank count the callback keeps at gp-0x2744), so the cap of 60 keeps the game's speed.
   Fights at 298-300 frames per 5 s, sound unchanged. `FFOP_NATIVE_FRAMES=0` keeps the vblank loop.
-- VU1: every microprogram runs on Vu1StreamAdapter's sandbox (SC3's work, on the VIF1 thread) and its
-  output goes to the GL GS back end with its register writes (gsWrites); the adapter's frame ends at 0x19E718. No
-  MSCAL is left on the emulated VU1, fights still at 299-300 frames per 5 s, menus and fights drawn as on VU1.
+- VU1, still emulation: every microprogram runs on Vu1StreamAdapter's sandbox (SC3's work, on the VIF1 thread), which
+  interprets their compiled code, and their output reaches the GL GS back end through the GS front end's register state
+  (gsWrites); the adapter's frame ends at 0x19E718. That only moved the programs off the emulated VU1 (no MSCAL left
+  there, fights at 299-300 frames per 5 s); the sandbox and gsWrites are emulation by another name, to keep as
+  diagnostics only. To remove: port the microprograms to C++ (SC3's scripts/vu1_port_gen.py; a fight puts half of the
+  VIF1 thread in four blobs, 382e53ba, 12e72aa9, 81b61065, ea3c12da) and build the draws natively from the game's data.
   `FFOP_NATIVE_VU1=0` puts the programs back on VU1.
 - Movies (`PS2X_FFOP_MOVIES=1`, still off by default): the player pre-fills by demuxing until sceMpegDemuxPssRing takes
   less than it is given, which the runtime only did at 128 decoded pictures ahead, more than FO_1.PSS holds; the
@@ -144,7 +147,7 @@ environment says otherwise.
 
 ## Status
 
-Playable on the native target (PS2Recomp native/renderer 71524c5, frames on the host clock, VU1 on the sandbox): title, main
+Playable on the native target (PS2Recomp native/renderer 71524c5, frames on the host clock; VU1 still emulated on the sandbox): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
