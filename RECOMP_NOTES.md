@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (native/renderer d191191, frame-sleep helper included), set by the override unless the
+On PS2Recomp's native target (sc3/native-vu1 0951772d: native/renderer 2d6ecba with the VU1 sandbox work), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
@@ -129,13 +129,17 @@ environment says otherwise.
   presented, showing the newest finished buffer (the game flips after the wait). The engine steps a fixed amount per
   frame (nothing reads the vblank count the callback keeps at gp-0x2744), so the cap of 60 keeps the game's speed.
   Fights at 298-300 frames per 5 s, sound unchanged. `FFOP_NATIVE_FRAMES=0` keeps the vblank loop.
+- VU1: every microprogram runs on Vu1StreamAdapter's sandbox (SC3's sc3/native-vu1, on the VIF1 thread) and its
+  output goes to the GL GS back end with its register writes (gsWrites); the adapter's frame ends at 0x19E718. No
+  MSCAL is left on the emulated VU1, fights still at 299-300 frames per 5 s, menus and fights drawn as on VU1.
+  `FFOP_NATIVE_VU1=0` puts the programs back on VU1.
 - `rand` (0x1D9220) runs the game's own code: the runtime stub returned 15-bit values while the game scales by 2^-31,
   so every random pick was 0 and 0x13C818 (a random entry different from the last one) looped forever on Ace's
   special move, on every renderer.
 
 ## Status
 
-Playable on the native target (PS2Recomp native/renderer d191191, frames on the host clock): title, main
+Playable on the native target (PS2Recomp sc3/native-vu1 0951772d, frames on the host clock, VU1 on the sandbox): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in

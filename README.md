@@ -31,8 +31,9 @@ Not an emulator: the game's own MIPS R5900 code, rebuilt as a native program on 
 **Playable.** From the title screen through the main menu, character select and VS screen into 3D fights (Fighting
 Mode against the CPU, rounds, special moves and their cut-ins), with music and sound effects, at a steady 60 game
 frames per second. It runs on PS2Recomp's native target: the GS is translated to OpenGL at twice the PS2's resolution
-instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), the
-frames and the sound run on the PC's clock (no emulated vblanks). VS Fight, Gamble, Training and the options reach their screens, and the memory card
+instead of being emulated, the game's 14 IOP modules are recompiled to C++ (none left to the interpreter), its VU1
+microprograms run on PS2Recomp's native sandbox instead of the emulated VU1, and the frames and the sound run on the
+PC's clock (no emulated vblanks). VS Fight, Gamble, Training and the options reach their screens, and the memory card
 saves and loads the game's data. Movies are skipped.
 
 | Milestone | |
@@ -42,7 +43,7 @@ saves and loads the game's data. Movies are skipped.
 | Title screen, menus, character select | ✅ |
 | Fights (Fighting Mode vs CPU) | ✅ |
 | Music and sound effects | ✅ |
-| Native target: GS on OpenGL at 2x, IOP modules recompiled, frames and sound on the PC clock, 60 fps | ✅ |
+| Native target: GS on OpenGL at 2x, IOP modules recompiled, VU1 on the native sandbox, frames and sound on the PC clock, 60 fps | ✅ |
 | Logos and movies (`MOVIES/*.PSS`) | ⏳ |
 | Other modes: VS Fight, Gamble, Training, Replay, Option menus | 🔧 |
 | Memory card: save and load | ✅ |
@@ -75,7 +76,7 @@ disc files ──► ps2_analyzer (+ Ghidra, hint lists) ──► recomp/ffop.t
 - `runtime/ffop_overrides.cpp` holds the game-specific bindings, matched to the ELF by entry point and CRC.
 
 The runtime is the `PS2Recomp/` git submodule: [boubou666/PS2Recomp](https://github.com/boubou666/PS2Recomp), branch
-`native/renderer`, shared with the *Soulcalibur III*, *Twisted Metal:
+`sc3/native-vu1` (`native/renderer` with the VU1 sandbox work, on its way there), shared with the *Soulcalibur III*, *Twisted Metal:
 Black*, *Valkyrie Profile 2: Silmeria*, *The Lord of the Rings: The Third Age*, *Smash Court Tennis Pro Tournament 2*
 and *Drakengard* recompilations. The top-level `CMakeLists.txt` builds its runtime, swaps its placeholder function
 table for the generated one and links the generated code, `runtime/`, the compiled VU1 microcode and the recompiled
