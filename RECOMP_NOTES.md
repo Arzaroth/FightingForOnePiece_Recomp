@@ -109,7 +109,7 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (native/renderer 29eb7b7, VU1 sandbox work included), set by the override unless the
+On PS2Recomp's native target (native/renderer d698378, VU1 sandbox and MPEG host clock included), set by the override unless the
 environment says otherwise.
 
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
@@ -133,13 +133,18 @@ environment says otherwise.
   output goes to the GL GS back end with its register writes (gsWrites); the adapter's frame ends at 0x19E718. No
   MSCAL is left on the emulated VU1, fights still at 299-300 frames per 5 s, menus and fights drawn as on VU1.
   `FFOP_NATIVE_VU1=0` puts the programs back on VU1.
+- Movies (`PS2X_FFOP_MOVIES=1`, still off by default): the player pre-fills by demuxing until sceMpegDemuxPssRing takes
+  less than it is given, which the runtime only did at 128 decoded pictures ahead, more than FO_1.PSS holds; the
+  override sets the limit to 3 (the game's 0x17E300-byte sceMpegCreate work area). With native/renderer d698378 (idle
+  presentation and the MPEG host clock) FO_1.PSS then plays paced on the PC clock under native frames. ONEP_OP3.PSS
+  still stalls early.
 - `rand` (0x1D9220) runs the game's own code: the runtime stub returned 15-bit values while the game scales by 2^-31,
   so every random pick was 0 and 0x13C818 (a random entry different from the last one) looped forever on Ace's
   special move, on every renderer.
 
 ## Status
 
-Playable on the native target (PS2Recomp native/renderer 29eb7b7, frames on the host clock, VU1 on the sandbox): title, main
+Playable on the native target (PS2Recomp native/renderer d698378, frames on the host clock, VU1 on the sandbox): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
