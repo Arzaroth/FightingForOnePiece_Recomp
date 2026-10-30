@@ -1,13 +1,17 @@
 #include "game_overrides.h"
+#include "ps2_recompiled_functions.h"
 #include "ps2_runtime.h"
 #include "runtime/ee_scheduler.h"
 #include "runtime/frame_pacer.h"
 #include "runtime/gs/gs_cpu_backend.h"
+#include "runtime/native/native_vif1.h"
+#include "runtime/native/native_vu1_stream.h"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 namespace
@@ -53,11 +57,57 @@ namespace
     constexpr uint32_t kFrameWait = 0x0019E718u;
     constexpr uint32_t kGsGParam = 0x004E3F40u;
 
+    // VU1 off the emulated path: every microprogram runs on the native sandbox and what it sends goes to the GL GS back
+    // end with its register writes, in stream order. The frame ends at the main loop's frame wait, after the game has
+    // sent the frame. FFOP_NATIVE_VU1=0 leaves the programs on VU1.
+    bool g_nativeVu1 = false;
+    bool g_nativeVu1OnVif1Thread = false;
+
+    void nativeVu1FrameEnd()
+    {
+        if (!g_nativeVu1)
+            return;
+        if (g_nativeVu1OnVif1Thread)
+            ps2x::native::runOnVif1Thread([] { ps2x::native::Vu1StreamAdapter::instance().frameEnd(); });
+        else
+            ps2x::native::Vu1StreamAdapter::instance().frameEnd();
+    }
+
+    void installNativeVu1(PS2Runtime &runtime)
+    {
+        const char *gs = std::getenv("PS2X_GS_RENDERER");
+        const char *value = std::getenv("FFOP_NATIVE_VU1");
+        if (!(gs && std::strcmp(gs, "native") == 0) || (value && value[0] == '0'))
+            return;
+        ps2x::native::Vu1StreamAdapter::Config config;
+        config.screen.originX = 2048.0f - 320.0f;
+        config.screen.originY = 2048.0f - 224.0f;
+        config.screen.width = 640.0f;
+        config.screen.height = 448.0f;
+        config.choose = [](ps2x::native::Vu1StreamAdapter &, uint32_t)
+        { return ps2x::native::Vu1StreamAdapter::Choice::Sandbox; };
+        config.draw = [](ps2x::native::Vu1StreamAdapter &, uint32_t, bool) {};
+        config.gsWrites = true;
+        g_nativeVu1OnVif1Thread = runtime.memory().vif1Threaded();
+        config.onVif1Thread = g_nativeVu1OnVif1Thread;
+        ps2x::native::Vu1StreamAdapter::instance().install(config);
+        g_nativeVu1 = true;
+        std::cerr << "[ffop] native VU1: every program on the sandbox, drawn by the GS back end"
+                  << (g_nativeVu1OnVif1Thread ? ", on the VIF1 thread" : ", on the game thread") << std::endl;
+    }
+
+    void frameWaitVu1FrameEnd(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+    {
+        nativeVu1FrameEnd();
+        sub_0019E718_0x19e718(rdram, ctx, runtime);
+    }
+
     std::chrono::steady_clock::time_point g_frameStart{};
     uint64_t g_frameStartCycle = 0;
 
     void nativeFrameWait(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
     {
+        nativeVu1FrameEnd();
         using Clock = std::chrono::steady_clock;
         EeScheduler &ee = runtime->eeScheduler();
         const Clock::time_point now = Clock::now();
@@ -121,6 +171,9 @@ namespace
             runtime.gsForPresentation().setPresentNewestDisplayBuffer(true);
             runtime.registerFunction(kFrameWait, nativeFrameWait);
         }
+        installNativeVu1(runtime);
+        if (g_nativeVu1 && !runtime.eeScheduler().nativeFrames())
+            runtime.registerFunction(kFrameWait, frameWaitVu1FrameEnd);
         std::cerr << "[ffop] Fighting for One Piece overrides applied" << std::endl;
     }
 }
