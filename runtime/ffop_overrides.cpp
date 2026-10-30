@@ -1,3 +1,4 @@
+#include "ffop_vu1_port.h"
 #include "game_overrides.h"
 #include "ps2_recompiled_functions.h"
 #include "ps2_runtime.h"
@@ -78,9 +79,17 @@ namespace
         if (!g_nativeVu1)
             return;
         if (g_nativeVu1OnVif1Thread)
-            ps2x::native::runOnVif1Thread([] { ps2x::native::Vu1StreamAdapter::instance().frameEnd(); });
+            ps2x::native::runOnVif1Thread(
+                []
+                {
+                    ps2x::native::Vu1StreamAdapter::instance().frameEnd();
+                    ffop::reportVu1Port();
+                });
         else
+        {
             ps2x::native::Vu1StreamAdapter::instance().frameEnd();
+            ffop::reportVu1Port();
+        }
     }
 
     void installNativeVu1(PS2Runtime &runtime)
@@ -100,6 +109,7 @@ namespace
         config.gsWrites = true;
         g_nativeVu1OnVif1Thread = runtime.memory().vif1Threaded();
         config.onVif1Thread = g_nativeVu1OnVif1Thread;
+        ffop::installVu1Port(config);
         ps2x::native::Vu1StreamAdapter::instance().install(config);
         g_nativeVu1 = true;
         std::cerr << "[ffop] native VU1: every program on the sandbox, drawn by the GS back end"
