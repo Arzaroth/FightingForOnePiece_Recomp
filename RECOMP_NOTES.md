@@ -109,9 +109,12 @@ address 0 in a synthetic ELF, which `scripts/compile_vu1.sh` also hands to `ps2_
 
 ## Native target
 
-On PS2Recomp's native target (native/renderer 71524c5: MPEG host clock and the GS page coherence included; VU1 still on the sandbox), set by the override unless the
+On PS2Recomp's native target (sc3/ffop-region-clamp cc3a1db, native/renderer effa1cb plus one fix: MPEG host clock and the GS page coherence included; VU1 still on the sandbox), set by the override unless the
 environment says otherwise.
 
+- Sandboxed VU1 draws (gsWrites) under REGION_CLAMP: GifToNative rescaled U and V into the region's window for the
+  native renderer's texture cache, and the GS back end then applied the region again, so the title, menus, timer,
+  names and banners came out as smeared, shifted strips (fixed on sc3/ffop-region-clamp; FFOP_NATIVE_VU1=0 hid it).
 - GS: `PS2X_GS_RENDERER=native` (GSNativeBackend, OpenGL). The menus draw their translucent layers with TEST
   0x5178b (alpha GEQUAL 0x78, AFAIL FB_ONLY); the back end discarded every failing pixel, so the watermarks, title
   gradient and name plate of character select were missing (native/gs-afail: a second pass for the failing pixels
@@ -147,7 +150,7 @@ environment says otherwise.
 
 ## Status
 
-Playable on the native target (PS2Recomp native/renderer 71524c5, frames on the host clock; VU1 still emulated on the sandbox): title, main
+Playable on the native target (PS2Recomp sc3/ffop-region-clamp cc3a1db, frames on the host clock; VU1 still emulated on the sandbox): title, main
 menu, character select, VS screen and Fighting Mode fights against the CPU (rounds, special moves and their cut-ins,
 random opponents and stages since the game's own `rand` runs), with music and sound, at a steady 60 game frames per
 second with the GS on OpenGL at 2x. Movies are skipped (`PS2X_FFOP_MOVIES=1` still sits on a black screen in
