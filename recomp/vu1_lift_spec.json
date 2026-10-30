@@ -1,0 +1,62 @@
+{
+  "programs": {
+    "ffop382e": {
+      "hash": "0x382e53ba1c590497",
+      "pairs": 2048,
+      "function": "ffop382e",
+      "file": "ffop_vu1_382e.cpp",
+      "entries": [
+        "0x10",
+        "0x148",
+        "0x1418"
+      ],
+      "targets": [
+        "0x7e8",
+        "0x1148",
+        "0x1a48",
+        "0x2220",
+        "0x2b20",
+        "0x2b50",
+        "0x2b88",
+        "0x2bb8"
+      ]
+    },
+    "ffop12e7": {
+      "hash": "0x12e72aa9aa1230a3",
+      "pairs": 580,
+      "function": "ffop12e7",
+      "file": "ffop_vu1_12e7.cpp",
+      "entries": [
+        "0x0",
+        "0x1b8",
+        "0x1208"
+      ]
+    },
+    "ffop81b6": {
+      "hash": "0x81b6106525d1ecac",
+      "pairs": 528,
+      "function": "ffop81b6",
+      "file": "ffop_vu1_81b6.cpp",
+      "entries": [
+        "0x0",
+        "0x200",
+        "0x2d0",
+        "0x610",
+        "0x910",
+        "0xc78",
+        "0x1068"
+      ]
+    },
+    "ffopea3c": {
+      "hash": "0xea3c12da55fe0a86",
+      "pairs": 622,
+      "function": "ffopea3c",
+      "file": "ffop_vu1_ea3c.cpp",
+      "entries": [
+        "0x0",
+        "0x250",
+        "0x1360"
+      ]
+    }
+  }
+}

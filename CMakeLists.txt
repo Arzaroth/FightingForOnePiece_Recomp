@@ -35,6 +35,20 @@ else()
         "VU1 runs in the interpreter (scripts/compile_vu1.sh)")
 endif()
 
+# The VU1 programs of recomp/vu1_lift_spec.json as C++ (PS2Recomp/tools/vu1_lift.py, run by scripts/compile_vu1.sh).
+file(GLOB FFOP_VU1_LIFT_SOURCES CONFIGURE_DEPENDS "${FFOP_GENERATED_DIR}/vu1lift/*.cpp")
+if(FFOP_VU1_LIFT_SOURCES)
+    add_library(ffop_vu1_lift OBJECT ${FFOP_VU1_LIFT_SOURCES})
+    target_link_libraries(ffop_vu1_lift PRIVATE ps2_runtime)
+    set_target_properties(ffop_vu1_lift PROPERTIES UNITY_BUILD OFF)
+    target_compile_options(ffop_vu1_lift PRIVATE -O2 -g0)
+    target_sources(ps2EntryRunner PRIVATE $<TARGET_OBJECTS:ffop_vu1_lift>)
+    target_compile_definitions(ps2EntryRunner PRIVATE FFOP_VU1_LIFT=1)
+else()
+    message(STATUS "FightingForOnePiece_Recomp: no lifted VU1 programs in ${FFOP_GENERATED_DIR}/vu1lift, "
+        "they run on the sandbox (scripts/compile_vu1.sh)")
+endif()
+
 file(GLOB FFOP_IOP_SOURCES CONFIGURE_DEPENDS "${FFOP_GENERATED_DIR}/iop/*.cpp")
 if(FFOP_IOP_SOURCES)
     set_source_files_properties(${FFOP_IOP_SOURCES} TARGET_DIRECTORY ps2EntryRunner PROPERTIES
