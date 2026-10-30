@@ -57,6 +57,53 @@
         "0x250",
         "0x1360"
       ]
+    },
+    "ffop14e1": {
+      "hash": "0x14e11e9c70344de6",
+      "pairs": 544,
+      "function": "ffop14e1",
+      "file": "ffop_vu1_14e1.cpp",
+      "entries": [
+        "0x10",
+        "0x160",
+        "0xad0"
+      ],
+      "targets": [
+        "0x138"
+      ]
+    },
+    "ffop8915": {
+      "hash": "0x8915b6aa8ecec86a",
+      "pairs": 1594,
+      "function": "ffop8915",
+      "file": "ffop_vu1_8915.cpp",
+      "entries": [
+        "0x10",
+        "0x158",
+        "0x1670"
+      ],
+      "targets": [
+        "0x138",
+        "0x8b0",
+        "0x1288",
+        "0x1d30",
+        "0x24e0",
+        "0x2db8",
+        "0x2de8",
+        "0x2e20",
+        "0x2e50"
+      ]
+    },
+    "ffopf06b": {
+      "hash": "0xf06b099386f7008e",
+      "pairs": 628,
+      "function": "ffopf06b",
+      "file": "ffop_vu1_f06b.cpp",
+      "entries": [
+        "0x0",
+        "0x1b0",
+        "0x1390"
+      ]
     }
   }
 }
