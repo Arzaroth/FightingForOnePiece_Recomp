@@ -85,6 +85,8 @@ stubs = [
   "sceMpegGetPicture@0x001C5008",
   "sceMpegGetPictureRAW8@0x001C5050",
   "sceMpegReset@0x001C50A8",
+  "sceMpegIsEnd@0x001C5128",
+  "sceMpegIsRefBuffEmpty@0x001C5138",
   "sceMpegGetDecodeMode@0x001C5160",
   "sceMpegAddCallback@0x001C5180",
   "sceMpegClearRefBuff@0x001C5338",
